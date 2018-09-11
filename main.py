@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # from auth import consumer_key, consumer_secret, access_token, access_token_secret, api_key 
 import auth
 import os.path
@@ -5,8 +7,17 @@ import csv
 import re
 import sys
 import requests
+import logging
 # sys.path.insert(0, '/Users/tamirgz/Documents/PythonProjects/Finance/Stocksheet/modules')
 from fundamentals import Fundamentals
+
+logger = logging.getLogger()
+handler = logging.StreamHandler()
+formatter = logging.Formatter(
+        '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 URL = "https://www.finviz.com/quote.ashx?t={}"
 DEFAULT_THS = 50 # percent
@@ -44,9 +55,9 @@ def analyze_ticker(ticker, ongoing_print=True):
 	response = requests.get(URL.format(ticker))
 	if response.status_code == 200:
 		try:
-			fundas = Fundamentals(0.025, 0.09, ticker)
-			fundas.calc_wacc()
-			fundas.yahoo_scrapper()
+			fundas = Fundamentals(0.025, 0.09, ticker, logger)
+			# fundas.calc_wacc()
+			fundas.yahooScrapper()
 			fundas.print_data()
 			# warren.get_cf()	
 			# if ongoing_print:
@@ -89,7 +100,7 @@ def main():
 			while idx < len(ticker_list):
 				ticker = ticker_list[idx]
 			# for ticker in ticker_list:
-				print "======================== %s [%d / %d] ========================" % (ticker, idx, len(ticker_list))
+				# print "======================== %s [%d / %d] ========================" % (ticker, idx, len(ticker_list))
 				analyze_ticker(ticker, ongoing_print=False)
 				update_last_analyzed(filename, idx-1)
 				idx = idx + 1
@@ -109,7 +120,7 @@ def main():
 			while idx < len(ticker_list):
 				ticker = ticker_list[idx]
 			# for ticker in ticker_list:
-				print "======================== %s [%d / %d] ========================" % (ticker, idx, len(ticker_list))
+				# print "======================== %s [%d / %d] ========================" % (ticker, idx, len(ticker_list))
 				analyze_ticker(ticker, ongoing_print=False)
 				update_last_analyzed(filename, idx-1)
 				idx = idx + 1
@@ -129,13 +140,13 @@ def main():
 			while idx < len(ticker_list):
 				ticker = ticker_list[idx]
 			# for ticker in ticker_list:
-				print "======================== %s [%d / %d] ========================" % (ticker, idx, len(ticker_list))
+				# print "======================== %s [%d / %d] ========================" % (ticker, idx, len(ticker_list))
 				analyze_ticker(ticker, ongoing_print=False)
 				update_last_analyzed(filename, idx-1)
 				idx = idx + 1
 		else:
 			ticker = sys.argv[1]
-			print "======================== %s ========================" % ticker
+			# print "======================== %s ========================" % ticker
 			analyze_ticker(ticker)
 
 	print "Potential stocks:\n"
