@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 import re
 import os
 import time
+import urllib2
+from simple_requests import Requests
 
 # metric = ['Market Cap', 'P/E', 'EPS (ttm)', 'Dividend', 'Dividend %', 'Shs Outstand', 'Price', 'Cash/sh']
 # metrics_2 = ['Beta', 'Total Debt']
@@ -52,7 +54,12 @@ class Fundamentals(object):
         self.price_diff = 0
         self.price = 0
         self.df = pd.DataFrame(columns=self.KEYS)
+        self.df_filtered = pd.DataFrame(columns=self.KEYS)
         self.data = dict.fromkeys(self.KEYS, 0.0)
+        self.filename = "dataframe"
+        self.filtered_filename = "filtered_dataframe.dat"
+        self.requests = Requests()
+        self.ses = requests.session()
 
     def yahooScrapper(self):
         self.yahooSummaryScrapper()
@@ -65,11 +72,22 @@ class Fundamentals(object):
         self.next_idx += 1
         self.df = self.df.append(l_df, sort=False)
 
+    def getDataFromUrl(self, url):
+        # soup = bs(requests.get(url, verify=True, timeout=None).content, features='html5lib')
+        # soup = bs(self.requests.one(url).content, features='html5lib')
+        soup = bs(self.ses.get(url, timeout=None).content, features='html5lib')
+        # soup = bs(requests.get(url, verify=False, timeout=None).content, features='html5lib')
+        # soup = bs(urllib2.urlopen(url).read(), features='html5lib')
+        return soup
+
     def yahooSummaryScrapper(self):
         try:
             ystock_url = self.URLS[6].format(self.ticker, self.ticker)
-            soup = bs(requests.get(ystock_url).content, features='html5lib')
+            soup = self.getDataFromUrl(ystock_url)
+        except:
+            self.logger.info("[yahooSummaryScrapper] Error souping %s" % ystock_url)
 
+        try:
             self.data["Ticker"] = self.ticker
 
             to_scrap = "Volume"
@@ -92,12 +110,13 @@ class Fundamentals(object):
             scraped_data = soup.find(text = to_scrap).find_next().text
             self.data[to_scrap] = self.raw_to_num(scraped_data)
         except:
-            pass
+            self.logger.info("[yahooSummaryScrapper] Error scraping %s" % to_scrap)
 
     def yahooKeyStatisticsScrapper(self):
         try:
             ystock_url = self.URLS[3].format(self.ticker)
-            soup = bs(requests.get(ystock_url).content, features='html5lib')
+            soup = self.getDataFromUrl(ystock_url)
+            # soup = bs(requests.get(ystock_url).content, features='html5lib')
         except:
             self.logger.info("[yahooKeyStatisticsScrapper] Error souping %s" % ystock_url)
 
@@ -123,12 +142,13 @@ class Fundamentals(object):
         try:
             self.cost_of_eq = self.risk_free_rate + self.beta * (self.market_return - self.risk_free_rate)
         except:
-            self.logger.info("[yahoo_scraper] Error in cost_of_eq calc")
+            self.logger.info("[yahooKeyStatisticsScrapper] Error in cost_of_eq calc")
 
     def yahooBalanceSheetScrapper(self):
         try:
             ystock_url = self.URLS[5].format(self.ticker)
-            soup = bs(requests.get(ystock_url).content, features='html5lib')
+            soup = self.getDataFromUrl(ystock_url)
+            # soup = bs(requests.get(ystock_url).content, features='html5lib')
         except:
             self.logger.info("[yahooBalanceSheetScrapper] Error souping %s" % ystock_url)
 
@@ -356,3 +376,6 @@ class Fundamentals(object):
         print("{} : {}".format("PV", self.PV))
         print("{} : {}".format("Price-per-Share", self.price_per_share))
         print("{} : {}%".format("Price-Diff", self.price_diff))
+
+    def dump_to_file(self):
+        self.df.to_csv(self.filename, encoding='utf-8', index=False)
