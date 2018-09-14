@@ -51,27 +51,27 @@ def update_last_analyzed(filename, idx):
 
 def analyze_ticker(ticker, ongoing_print=True):
     global fundas, terminated, logger, action
-    response = requests.get(URL.format(ticker))
-    if response.status_code == 200:
-        try:
-            fundas.setTicker(ticker)
-            # fundas.calc_wacc()
-            fundas.yahooScrapper()
-            if ongoing_print:
-                fundas.print_data()
-            # warren.get_cf()   
-            # warren.get_dcf()
-            # if ongoing_print:
-                # warren.print_calcs()
-            # if warren.price_diff >= DEFAULT_THS:
-                # to_analyze.append(ticker)
-                # with open("candidates.dat", "a+") as f:
-                    # f.write("%s (%f, %f, %f, %f, %s, %f)\n" % 
-                        # (ticker, warren.price_diff, warren.price, warren.price_per_share, self.wacc, str(warren.cf_list[0]), self.TCF, str(warren.discounted_cf_list[0])))
-        except ZeroDivisionError:
-            print("Unable to calculate cost of debt for this stock")
-    else:
-        print("Ticker not found, check spelling and try again")
+    # response = requests.get(URL.format(ticker))
+    # if response.status_code == 200:
+    try:
+        fundas.setTicker(ticker)
+        # fundas.calc_wacc()
+        fundas.yahooScrapper()
+        if ongoing_print:
+            fundas.print_data()
+        # warren.get_cf()   
+        # warren.get_dcf()
+        # if ongoing_print:
+            # warren.print_calcs()
+        # if warren.price_diff >= DEFAULT_THS:
+            # to_analyze.append(ticker)
+            # with open("candidates.dat", "a+") as f:
+                # f.write("%s (%f, %f, %f, %f, %s, %f)\n" % 
+                    # (ticker, warren.price_diff, warren.price, warren.price_per_share, self.wacc, str(warren.cf_list[0]), self.TCF, str(warren.discounted_cf_list[0])))
+    except ZeroDivisionError:
+        print("Unable to calculate cost of debt for this stock")
+    # else:
+    #     print("Ticker not found, check spelling and try again")
 
 def get_start_index(l_action):
     global fundas, terminated, logger, action
