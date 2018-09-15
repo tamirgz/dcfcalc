@@ -85,6 +85,7 @@ def get_start_index(l_action):
 def main():
     global fundas, terminated, logger, action
     ticker_list = []
+    save_to_csv = False
 
     if len(sys.argv) <= 1:
         print("Not enough parameters")
@@ -112,6 +113,7 @@ def main():
                 idx = idx + 1
                 end = time.time()
                 print "[%s]========================\t%s\t[%d / %d : %f] ========================" % (action, ticker, idx, len(ticker_list), end-start)
+            save_to_csv = True
         elif action == "NASDAQ":
             idx = get_start_index(action)
             file1 = open('tickers/nasdaqlisted.txt')
@@ -130,6 +132,7 @@ def main():
                 idx = idx + 1
                 end = time.time()
                 print "[%s]========================\t%s\t[%d / %d : %f] ========================" % (action, ticker, idx, len(ticker_list), end-start)
+            save_to_csv = True
         elif action == "OTHER":
             idx = get_start_index(action)
             file2 = open('tickers/otherlisted.txt')
@@ -148,6 +151,7 @@ def main():
                 idx = idx + 1
                 end = time.time()
                 print "[%s]========================\t%s\t[%d / %d : %f] ========================" % (action, ticker, idx, len(ticker_list), end-start)
+            save_to_csv = True
         else:
             ticker = sys.argv[1]
             # print "======================== %s ========================" % ticker
@@ -156,6 +160,9 @@ def main():
             end = time.time()
             logger.info("Time Elapsed: %f" % (end - start))
 
+    if save_to_csv:
+        fundas.df_to_csv(action)
+        
     # print "Potential stocks:\n"
     # print to_analyze
     # ticker = raw_input("Enter the ticker you would like to search for: ")
