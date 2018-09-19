@@ -11,9 +11,8 @@ import logging
 import time
 import signal
 import warnings
-# sys.path.insert(0, '/Users/tamirgz/Documents/PythonProjects/Finance/Stocksheet/modules')
 from fundamentals import Fundamentals
-
+from filter import Filter
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 DEFAULT_THS = 50 # percent
@@ -21,13 +20,14 @@ URL = "https://www.finviz.com/quote.ashx?t={}"
 
 logger = None
 fundas = None
+filters = None
 terminated = False
 action = ""
 
 # to_analyze = []
 
 def exit_gracefully(signum, frame):
-    global fundas, terminated, logger, action
+    global fundas, terminated, logger, action, filters
     # restore the original signal handler as otherwise evil things will happen
     # in raw_input when CTRL+C is pressed, and our signal handler is not re-entrant
     signal.signal(signal.SIGINT, original_sigint)
@@ -50,7 +50,7 @@ def update_last_analyzed(filename, idx):
         f.write(str(idx))
 
 def analyze_ticker(ticker, ongoing_print=True):
-    global fundas, terminated, logger, action
+    global fundas, terminated, logger, action, filters
     # response = requests.get(URL.format(ticker))
     # if response.status_code == 200:
     try:
@@ -74,7 +74,7 @@ def analyze_ticker(ticker, ongoing_print=True):
     #     print("Ticker not found, check spelling and try again")
 
 def get_start_index(l_action):
-    global fundas, terminated, logger, action
+    global fundas, terminated, logger, action, filters
 
     ret = fundas.csv_to_df(l_action)
     idx = 0
@@ -83,7 +83,7 @@ def get_start_index(l_action):
     return idx
 
 def main():
-    global fundas, terminated, logger, action
+    global fundas, terminated, logger, action, filters
     ticker_list = []
     save_to_csv = False
 
@@ -152,6 +152,25 @@ def main():
                 end = time.time()
                 print "[%s]========================\t%s\t[%d / %d : %f] ========================" % (action, ticker, idx, len(ticker_list), end-start)
             save_to_csv = True
+        elif action == "TEST":
+            idx = get_start_index(action)
+            file2 = open('tickers/test.txt')
+            for line in file2.readlines()[1:]:
+                stock = line.strip().split('|')[0]
+                if (re.match(r'^[A-Z]+$',stock)):
+                    ticker_list.append(stock)
+            file2.close()
+
+            ticker_list_len = len(ticker_list)
+
+            while idx < ticker_list_len and terminated == False:
+                start = time.time()
+                ticker = ticker_list[idx]
+                analyze_ticker(ticker, ongoing_print=False)
+                idx = idx + 1
+                end = time.time()
+                print "[%s]========================\t%s\t[%d / %d : %f] ========================" % (action, ticker, idx, len(ticker_list), end-start)
+            save_to_csv = True
         else:
             ticker = sys.argv[1]
             # print "======================== %s ========================" % ticker
@@ -162,6 +181,10 @@ def main():
 
     if save_to_csv:
         fundas.df_to_csv(action)
+
+    fundas.df_filtered = fundas.df
+    fundas.df_filtered = filters.filter(fundas.df_filtered)
+
         
     # print "Potential stocks:\n"
     # print to_analyze
@@ -196,6 +219,8 @@ if __name__ == "__main__":
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
+    filters = Filter(logger)
+    filters.add_filter('cond = data["Volume"] > 2000000')
     fundas = Fundamentals(0.025, 0.09, logger)
 
     # store the original SIGINT handler
