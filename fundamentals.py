@@ -31,13 +31,33 @@ class Fundamentals(object):
             "Inventory", \
             "Property Plant and Equipment", \
             "Total Liabilities", \
-            "Shares Outstanding"
+            "Shares Outstanding", \
             "Beta", \
             "PE Ratio (TTM)", \
             "EPS (TTM)", \
             "Dividend", \
             "Dividend %", \
-            "Cash/sh"]
+            "Cash/sh", \
+            "Cash And Cash Equivalents", \
+            "NET-NET", \
+            "Shares Outstanding"]
+
+    # KEYS = ["Ticker", \
+    #         "Previous Close", \
+    #         "Volume", \
+    #         "Market Cap", \
+    #         "Total Debt", \
+    #         "Net Receivables", \
+    #         "Inventory", \
+    #         "Property Plant and Equipment", \
+    #         "Total Liabilities", \
+    #         "Shares Outstanding"
+    #         "Beta", \
+    #         "PE Ratio (TTM)", \
+    #         "EPS (TTM)", \
+    #         "Dividend", \
+    #         "Dividend %", \
+    #         "Cash/sh"]
 
     CALC_DATA = {"Book Value": "", "NAV": ""}
     # keys are case sensitive - match data on the mw financials page
@@ -74,7 +94,8 @@ class Fundamentals(object):
             self.addToDb()
 
     def addToDb(self):
-        l_df = pd.DataFrame(self.data, index=[self.next_idx])
+        # import pdb; pdb.set_trace()
+        l_df = pd.DataFrame(self.data, index=[self.next_idx], columns=self.KEYS)
         self.next_idx += 1
         self.df = self.df.append(l_df, sort=False)
 
@@ -238,12 +259,19 @@ class Fundamentals(object):
         filename = "%s.csv" % action
         self.terminated = True
         self.df.to_csv(filename, encoding='utf-8', index=False)
+        # import pdb; pdb.set_trace()
         self.logger.info("[df_to_csv] Dataframe saved to file %s" % filename)
+
+    def filtered_to_csv(self):
+        import pdb; pdb.set_trace()
+        self.df_filtered.to_csv(self.filtered_filename, encoding='utf-8', index=False)
+        self.logger.info("[filtered_to_csv] Dataframe saved to file %s" % self.filtered_filename)
 
     def csv_to_df(self, action):
         filename = "%s.csv" % action
         if os.path.isfile(filename):
-            self.df = pd.read_csv(filename, names=self.KEYS)
+            self.df = pd.read_csv(filename, names=self.KEYS, header=None)
+            # import pdb; pdb.set_trace()
             return 1
         else:
             self.logger.error("[csv_to_df] file %s does not exist!" % filename)

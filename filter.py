@@ -1,4 +1,4 @@
-
+import numpy as np
 
 class Filter(object):
 
@@ -11,13 +11,12 @@ class Filter(object):
 		self.filters.append(new_filter)
 		self.logger.info("[add_filter] adding filter - %s" % new_filter)
 
-	def filter(self, data):	
+	def filter(self, data):
 		filtered = data
 		# for index, row in data.iterrows():
 		for condition in self.filters:
-			self.logger.info("condition: %s" % condition)
+			self.logger.info("[filter] condition --> %s" % condition)
 			exec(condition) # each condition looks like: cond = data["..."] <=> value
-			# if cond == True:
-			# 	filtered = filtered.append(row, sort=False)
-			self.logger.info("LAL")
-		return 
+			false_idx = np.where(cond == False)[0]
+			filtered = filtered.drop(false_idx)
+		return filtered

@@ -182,9 +182,10 @@ def main():
     if save_to_csv:
         fundas.df_to_csv(action)
 
+    import pdb; pdb.set_trace()
     fundas.df_filtered = fundas.df
     fundas.df_filtered = filters.filter(fundas.df_filtered)
-
+    fundas.filtered_to_csv()
         
     # print "Potential stocks:\n"
     # print to_analyze
