@@ -182,12 +182,14 @@ def main():
     if save_to_csv:
         fundas.df_to_csv(action)
 
-    import pdb; pdb.set_trace()
     fundas.df_filtered = fundas.df
     fundas.df_filtered = filters.filter(fundas.df_filtered)
-    fundas.filtered_to_csv()
+    if save_to_csv:
+        fundas.filtered_to_csv()
         
-    # print "Potential stocks:\n"
+    logger.info("Potential stocks:")
+    logger.info(fundas.df_filtered)
+    
     # print to_analyze
     # ticker = raw_input("Enter the ticker you would like to search for: ")
     # if response.status_code == 200:
@@ -221,7 +223,14 @@ if __name__ == "__main__":
     logger.setLevel(logging.INFO)
 
     filters = Filter(logger)
-    filters.add_filter('cond = data["Volume"] > 2000000')
+    filters.add_filter('cond = filtered["Volume"] > 1000000')
+    filters.add_filter('cond = filtered["Previous Close"] > 2.0')
+    filters.add_filter('cond = filtered["Previous Close"] < 100.0')
+    filters.add_filter('cond = filtered["Cash And Cash Equivalents"] > 0.0')
+    filters.add_filter('cond = filtered["PE Ratio (TTM)"] < 15')
+    filters.add_filter('cond = filtered["Cash And Cash Equivalents"] + 0.75 * filtered["Net Receivables"] + \
+        0.5 * filtered["Inventory"] + filtered["Property Plant and Equipment"] - \
+        filtered["Total Liabilities"] > 1.5 * filtered["Previous Close"]')
     fundas = Fundamentals(0.025, 0.09, logger)
 
     # store the original SIGINT handler

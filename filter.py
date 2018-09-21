@@ -19,4 +19,5 @@ class Filter(object):
 			exec(condition) # each condition looks like: cond = data["..."] <=> value
 			false_idx = np.where(cond == False)[0]
 			filtered = filtered.drop(false_idx)
+			filtered = filtered.reset_index(drop = True)
 		return filtered

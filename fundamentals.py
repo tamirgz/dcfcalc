@@ -263,7 +263,7 @@ class Fundamentals(object):
         self.logger.info("[df_to_csv] Dataframe saved to file %s" % filename)
 
     def filtered_to_csv(self):
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         self.df_filtered.to_csv(self.filtered_filename, encoding='utf-8', index=False)
         self.logger.info("[filtered_to_csv] Dataframe saved to file %s" % self.filtered_filename)
 
