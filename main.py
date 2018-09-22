@@ -227,7 +227,12 @@ if __name__ == "__main__":
     filters.add_filter('cond = filtered["Previous Close"] > 2.0')
     filters.add_filter('cond = filtered["Previous Close"] < 100.0')
     filters.add_filter('cond = filtered["Cash And Cash Equivalents"] > 0.0')
+    filters.add_filter('cond = filtered["PE Ratio (TTM)"] > 0')
     filters.add_filter('cond = filtered["PE Ratio (TTM)"] < 15')
+    filters.add_filter('cond = filtered["Net Receivables"] > 0')
+    filters.add_filter('cond = filtered["Inventory"] > 0')
+    filters.add_filter('cond = filtered["Property Plant and Equipment"] > 0')
+    filters.add_filter('cond = filtered["Total Liabilities"] > 0')
     filters.add_filter('cond = filtered["Cash And Cash Equivalents"] + 0.75 * filtered["Net Receivables"] + \
         0.5 * filtered["Inventory"] + filtered["Property Plant and Equipment"] - \
         filtered["Total Liabilities"] > 1.5 * filtered["Previous Close"]')
