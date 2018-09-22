@@ -15,11 +15,9 @@ class Filter(object):
 		filtered = data
 		for condition in self.filters:
 			self.logger.info("[filter] condition --> %s" % condition)
-			tmp = condition
 			exec(condition) # each condition looks like: cond = data["..."] <=> value
 			false_idx = np.where(cond == False)[0]
 			filtered = filtered.drop(false_idx)
 			filtered = filtered.reset_index(drop = True)
-			import pdb; pdb.set_trace()
 			print(tmp)
 		return filtered

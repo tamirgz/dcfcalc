@@ -267,7 +267,7 @@ class Fundamentals(object):
         self.logger.info("[filtered_to_csv] Dataframe saved to file %s" % self.filtered_filename)
 
     def csv_to_df(self, action):
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         filename = "%s.csv" % action
         if os.path.isfile(filename):
             self.df = pd.read_csv(filename, names=self.KEYS)
