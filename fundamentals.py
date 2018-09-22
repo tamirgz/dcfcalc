@@ -39,8 +39,7 @@ class Fundamentals(object):
             "Dividend %", \
             "Cash/sh", \
             "Cash And Cash Equivalents", \
-            "NET-NET", \
-            "Shares Outstanding"]
+            "NET-NET"]
 
     # KEYS = ["Ticker", \
     #         "Previous Close", \
@@ -264,14 +263,14 @@ class Fundamentals(object):
 
     def filtered_to_csv(self):
         # import pdb; pdb.set_trace()
-        self.df_filtered.to_csv(self.filtered_filename, encoding='utf-8', index=False)
+        self.df_filtered.to_csv(self.filtered_filename, encoding='utf-8', index=False, header=None)
         self.logger.info("[filtered_to_csv] Dataframe saved to file %s" % self.filtered_filename)
 
     def csv_to_df(self, action):
+        import pdb; pdb.set_trace()
         filename = "%s.csv" % action
         if os.path.isfile(filename):
-            self.df = pd.read_csv(filename, names=self.KEYS, header=None)
-            # import pdb; pdb.set_trace()
+            self.df = pd.read_csv(filename, names=self.KEYS)
             return 1
         else:
             self.logger.error("[csv_to_df] file %s does not exist!" % filename)
