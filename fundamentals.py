@@ -296,13 +296,13 @@ class Fundamentals(object):
         print("{} : {}%".format("Price-Diff", self.price_diff))
 
     def df_to_csv(self, action):
-        filename = "%s.csv" % action
+        filename = "out/%s.csv" % action
         self.terminated = True
         self.df.to_csv(filename, encoding='utf-8', index=False)
         self.logger.info("[df_to_csv] Dataframe saved to file %s" % filename)
 
     def csv_to_df(self, action):
-        filename = "%s.csv" % action
+        filename = "out/%s.csv" % action
         if os.path.isfile(filename):
             self.df = pd.read_csv(filename, names=self.KEYS, header=0)
             return 1

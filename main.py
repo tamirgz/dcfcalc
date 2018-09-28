@@ -221,6 +221,7 @@ if __name__ == "__main__":
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
+    # NET-NET filter
     l_filter = Filter(logger, "NET_NET.csv")
     l_filter.add_filter('cond = filtered["Volume"] > 1000000')
     l_filter.add_filter('cond = filtered["Previous Close"] > 2.0')
@@ -237,6 +238,7 @@ if __name__ == "__main__":
         filtered["Total Liabilities"] > 1.5 * filtered["Previous Close"]')
     filters.append(l_filter)
 
+    # Yinon filter
     l_filter = Filter(logger, "Yinon.csv")
     l_filter.add_filter('cond = filtered["EY"] > 12')
     l_filter.add_filter('cond = filtered["Price/Sales"] < 1.0')

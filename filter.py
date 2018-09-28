@@ -10,7 +10,7 @@ class Filter(object):
 
 	def add_filter(self, new_filter):
 		self.filters.append(new_filter)
-		self.logger.info("[add_filter] adding filter - %s" % new_filter)
+		self.logger.info("[add_filter][%s] adding filter - %s" % (self.name,new_filter))
 
 	def filter(self, data):
 		filtered = data
