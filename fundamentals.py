@@ -26,40 +26,30 @@ class Fundamentals(object):
             "Previous Close", \
             "Volume", \
             "Market Cap", \
+            "Enterprise Value", \
             "Total Debt", \
             "Net Receivables", \
             "Inventory", \
             "Property Plant and Equipment", \
+            "Total Assets", \
+            "Intangible Assets", \
             "Total Liabilities", \
             "Shares Outstanding", \
             "Beta", \
             "PE Ratio (TTM)", \
+            "Price/Sales", \
             "EPS (TTM)", \
             "Dividend", \
             "Dividend %", \
             "Cash/sh", \
             "Cash And Cash Equivalents", \
-            "NET-NET"]
-
-    # KEYS = ["Ticker", \
-    #         "Previous Close", \
-    #         "Volume", \
-    #         "Market Cap", \
-    #         "Total Debt", \
-    #         "Net Receivables", \
-    #         "Inventory", \
-    #         "Property Plant and Equipment", \
-    #         "Total Liabilities", \
-    #         "Shares Outstanding"
-    #         "Beta", \
-    #         "PE Ratio (TTM)", \
-    #         "EPS (TTM)", \
-    #         "Dividend", \
-    #         "Dividend %", \
-    #         "Cash/sh"]
-
-    CALC_DATA = {"Book Value": "", "NAV": ""}
-    # keys are case sensitive - match data on the mw financials page
+            "FCF", \
+            "NAV", \
+            "NAV%", \
+            "NET-NET", \
+            "NET-NET%", \
+            "EY", \
+            "EV/FCF"]
 
     def __init__(self, risk_free_rate, market_return, logger):
         self.name = "Fundamentals"
@@ -90,13 +80,80 @@ class Fundamentals(object):
             self.yahooSummaryScrapper()
             self.yahooKeyStatisticsScrapper()
             self.yahooBalanceSheetScrapper()
+            self.get_cf()
+
+            # add scrapped data to the Dataframe
             self.addToDb()
 
+            self.calcData()
+
+    def calcData(self):
+        self.data["NAV"] = (self.data["Total Assets"] - self.data["Intangible Assets"] - self.data["Total Liabilities"]) / self.data["Shares Outstanding"]
+        self.data["NAV%"] = self.data["NAV"] / self.data["Previous Close"] - 1
+
+        self.data["NET-NET"] = (self.data["Cash And Cash Equivalents"] + \
+                                            0.75 * self.data["Net Receivables"] + \
+                                            0.50 * self.data["Inventory"] + \
+                                            self.data["Property Plant and Equipment"] - \
+                                            self.data["Total Liabilities"]) / self.data["Shares Outstanding"]
+        self.data["NET-NET%"] = self.data["NET-NET"] / self.data["Previous Close"] - 1
+        
+        # EV > 12
+        self.data["EY"] = self.data["EPS (TTM)"] / (self.data["Enterprise Value"] / self.data["Shares Outstanding"])
+
+        # EV/FCF < 10
+        self.data["EV/FCF"] = self.data["Enterprise Value"] / self.data["FCF"]
+
+        # self.logger.info("self.data[NAV]: %.2f" % self.data["NAV"])
+        # self.logger.info("self.data[NAV%%]: %.2f%%" % self.data["NAV%"])
+        # self.logger.info("self.data[NET-NET]: %.2f" % self.data["NET-NET"])
+        # self.logger.info("self.data[NET-NET%%]: %.2f%%" % self.data["NET-NET%"])
+        # self.logger.info("self.data[EY%%]: %.2f%%" % self.data["EY"])
+
     def addToDb(self):
-        # import pdb; pdb.set_trace()
         l_df = pd.DataFrame(self.data, index=[self.next_idx], columns=self.KEYS)
         self.next_idx += 1
         self.df = self.df.append(l_df, sort=False)
+
+    def get_cf(self):
+        cf_generator = self.statement_scraper(self.URLS[2], "Free Cash Flow")
+        try:
+            cash_flow = next(cf_generator)
+            self.data["FCF"] = cash_flow[-1]
+        except:
+            self.logger.info("[get_cf] Error scrapping %s" % self.URLS[2])
+
+    def statement_scraper(self, url, *line_items): 
+        statement_url = url.format(self.ticker)
+        r = requests.get(statement_url)
+        soup = bs(r.text, "lxml")
+
+        for line_item in line_items:
+            target_list = []
+            try:
+                target = soup.find("td", text=line_item).parent
+                target_row = target.findAll("td", {"class" : "valueCell"})
+                for cell in target_row:
+                    num_in_MMs = self.raw_to_floats(cell.text)
+                    target_list.append(num_in_MMs)
+                yield target_list
+
+            except AttributeError: # Some elements have a "+" icon next to them and searching by text won't work
+                table_rows = soup.findAll("td", {"class" : "rowTitle"})
+                for row in table_rows:
+                    if line_item.lower() in row.text.lower():
+                        _match = re.search(r"" + line_item + "$",row.text) # search for the line item in the results of our scrape
+                        if _match:
+                            outer_row = row.parent
+
+                            _row = outer_row.findAll("td", {"class" : "valueCell"}) # Create a list with the FCF over the past four years
+                            _list = []
+
+                            for amount in _row:
+                                amount = self.raw_to_floats(amount.text)
+                                _list.append(amount)
+                            yield _list
+
 
     def getDataFromUrl(self, url):
         # soup = bs(requests.get(url, verify=True, timeout=None).content, features='html5lib')
@@ -151,12 +208,22 @@ class Fundamentals(object):
             to_scrap = "Total Debt"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Fw(500) Ta(end)').text
             self.data[to_scrap] = self.raw_to_floats(scraped_data)
+            
+            # Enterprise Value
+            to_scrap = "Enterprise Value"
+            scraped_data = soup.find(text = to_scrap).find_next().find_next().text
+            self.data[to_scrap] = self.raw_to_floats(scraped_data)
 
             # Shares Outstanding
             to_scrap = "Shares Outstanding"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Fw(500) Ta(end)').text
             self.data[to_scrap] = self.raw_to_floats(scraped_data)
             
+            # Price/Sales < 1
+            to_scrap = "Price/Sales"
+            scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Fw(500) Ta(end)').text
+            self.data[to_scrap] = self.raw_to_num(scraped_data)
+
             # Beta
             to_scrap = "Beta"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Fw(500) Ta(end)').text
@@ -194,26 +261,28 @@ class Fundamentals(object):
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Ta(end) Pstart(10px)').text
             self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
 
+            # Intangible Assets
+            to_scrap = "Intangible Assets"
+            scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Ta(end) Pstart(10px)').text
+            self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
+
             # Property Plant and Equipment
             to_scrap = "Property Plant and Equipment"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Ta(end) Pstart(10px)').text
             self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
 
+            # Below are values that are bold in the data table
             # Total Liabilities
             to_scrap = "Total Liabilities"                                         
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fw(b) Fz(s) Ta(end) Pb(20px)').text
             self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
+
+            # Total Assets
+            to_scrap = "Total Assets"
+            scraped_data = soup.find(text = to_scrap).find_next(class_='Fw(b) Fz(s) Ta(end) Pb(20px)').text
+            self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
         except:
             self.logger.info("[yahooBalanceSheetScrapper] Error scraping %s" % to_scrap)
-
-        try:
-            self.data["NET-NET"] = (self.data["Cash And Cash Equivalents"] + \
-                                            0.75 * self.data["Net Receivables"] + \
-                                            0.50 * self.data["Inventory"] + \
-                                            self.data["Property Plant and Equipment"] - \
-                                            self.data["Total Liabilities"]) / self.data["Shares Outstanding"]
-        except:
-            self.logger.info("[yahooBalanceSheetScrapper] Error in NET-NET calc")
 
     def raw_to_floats(self, num): # convert to floats as numbers on MW are represented with a "M" or "B"            
         # multiplier = 1/1000000
