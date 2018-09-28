@@ -11,6 +11,7 @@ import logging
 import time
 import signal
 import warnings
+from utils import *
 from fundamentals import Fundamentals
 from filter import Filter
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -20,7 +21,7 @@ URL = "https://www.finviz.com/quote.ashx?t={}"
 
 logger = None
 fundas = None
-filters = None
+filters = []
 terminated = False
 action = ""
 
@@ -59,7 +60,6 @@ def analyze_ticker(ticker, ongoing_print=True):
         fundas.yahooScrapper()
         if ongoing_print:
             fundas.print_data()
-        # warren.get_cf()   
         # warren.get_dcf()
         # if ongoing_print:
             # warren.print_calcs()
@@ -70,8 +70,6 @@ def analyze_ticker(ticker, ongoing_print=True):
                     # (ticker, warren.price_diff, warren.price, warren.price_per_share, self.wacc, str(warren.cf_list[0]), self.TCF, str(warren.discounted_cf_list[0])))
     except ZeroDivisionError:
         print("Unable to calculate cost of debt for this stock")
-    # else:
-    #     print("Ticker not found, check spelling and try again")
 
 def get_start_index(l_action):
     global fundas, terminated, logger, action, filters
@@ -182,10 +180,11 @@ def main():
     if save_to_csv:
         fundas.df_to_csv(action)
 
-    fundas.df_filtered = fundas.df
-    fundas.df_filtered = filters.filter(fundas.df_filtered)
-    if save_to_csv:
-        fundas.filtered_to_csv()
+    for filt in filters:
+        filtered_df = fundas.df
+        filtered_df = filt.filter(filtered_df)
+        if save_to_csv:
+            filtered_to_csv(logger, filtered_df, filt.name)
         
     logger.info("Potential stocks:")
     logger.info(fundas.df_filtered)
@@ -222,20 +221,28 @@ if __name__ == "__main__":
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
-    filters = Filter(logger)
-    filters.add_filter('cond = filtered["Volume"] > 1000000')
-    filters.add_filter('cond = filtered["Previous Close"] > 2.0')
-    filters.add_filter('cond = filtered["Previous Close"] < 100.0')
-    filters.add_filter('cond = filtered["Cash And Cash Equivalents"] > 0.0')
-    filters.add_filter('cond = filtered["PE Ratio (TTM)"] > 0')
-    filters.add_filter('cond = filtered["PE Ratio (TTM)"] < 15')
-    filters.add_filter('cond = filtered["Net Receivables"] > 0')
-    filters.add_filter('cond = filtered["Inventory"] > 0')
-    filters.add_filter('cond = filtered["Property Plant and Equipment"] > 0')
-    filters.add_filter('cond = filtered["Total Liabilities"] > 0')
-    filters.add_filter('cond = filtered["Cash And Cash Equivalents"] + 0.75 * filtered["Net Receivables"] + \
+    l_filter = Filter(logger, "NET_NET.csv")
+    l_filter.add_filter('cond = filtered["Volume"] > 1000000')
+    l_filter.add_filter('cond = filtered["Previous Close"] > 2.0')
+    l_filter.add_filter('cond = filtered["Previous Close"] < 100.0')
+    l_filter.add_filter('cond = filtered["Cash And Cash Equivalents"] > 0.0')
+    l_filter.add_filter('cond = filtered["PE Ratio (TTM)"] > 0')
+    l_filter.add_filter('cond = filtered["PE Ratio (TTM)"] < 15')
+    l_filter.add_filter('cond = filtered["Net Receivables"] > 0')
+    l_filter.add_filter('cond = filtered["Inventory"] > 0')
+    l_filter.add_filter('cond = filtered["Property Plant and Equipment"] > 0')
+    l_filter.add_filter('cond = filtered["Total Liabilities"] > 0')
+    l_filter.add_filter('cond = filtered["Cash And Cash Equivalents"] + 0.75 * filtered["Net Receivables"] + \
         0.5 * filtered["Inventory"] + filtered["Property Plant and Equipment"] - \
         filtered["Total Liabilities"] > 1.5 * filtered["Previous Close"]')
+    filters.append(l_filter)
+
+    l_filter = Filter(logger, "Yinon.csv")
+    l_filter.add_filter('cond = filtered["EY"] > 12')
+    l_filter.add_filter('cond = filtered["Price/Sales"] < 1.0')
+    l_filter.add_filter('cond = filtered["EV/FCF"] < 10.0')
+    filters.append(l_filter)
+
     fundas = Fundamentals(0.025, 0.09, logger)
 
     # store the original SIGINT handler

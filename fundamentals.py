@@ -2,10 +2,10 @@ from __future__ import division
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup as bs
-import re
 import os
 import time
 import urllib2
+from utils import *
 # from simple_requests import Requests
 
 # metric = ['Market Cap', 'P/E', 'EPS (ttm)', 'Dividend', 'Dividend %', 'Shs Outstand', 'Price', 'Cash/sh']
@@ -134,7 +134,7 @@ class Fundamentals(object):
                 target = soup.find("td", text=line_item).parent
                 target_row = target.findAll("td", {"class" : "valueCell"})
                 for cell in target_row:
-                    num_in_MMs = self.raw_to_floats(cell.text)
+                    num_in_MMs = raw_to_floats(cell.text)
                     target_list.append(num_in_MMs)
                 yield target_list
 
@@ -150,7 +150,7 @@ class Fundamentals(object):
                             _list = []
 
                             for amount in _row:
-                                amount = self.raw_to_floats(amount.text)
+                                amount = raw_to_floats(amount.text)
                                 _list.append(amount)
                             yield _list
 
@@ -172,26 +172,26 @@ class Fundamentals(object):
 
         try:
             self.data["Ticker"] = self.ticker
-
+            
             to_scrap = "Volume"
             scraped_data = soup.find(text = to_scrap).find_next().text
-            self.data[to_scrap] = self.raw_to_num(scraped_data)
+            self.data[to_scrap] = raw_to_num(scraped_data)
 
             to_scrap = "Previous Close"
             scraped_data = soup.find(text = to_scrap).find_next().text
-            self.data[to_scrap] = self.raw_to_num(scraped_data)
+            self.data[to_scrap] = raw_to_num(scraped_data)
 
             to_scrap = "Market Cap"
             scraped_data = soup.find(text = to_scrap).find_next().text
-            self.data[to_scrap] = self.raw_to_floats(scraped_data)
+            self.data[to_scrap] = raw_to_floats(scraped_data)
 
             to_scrap = "PE Ratio (TTM)"
             scraped_data = soup.find(text = to_scrap).find_next().text
-            self.data[to_scrap] = self.raw_to_num(scraped_data)
+            self.data[to_scrap] = raw_to_num(scraped_data)
 
             to_scrap = "EPS (TTM)"
             scraped_data = soup.find(text = to_scrap).find_next().text
-            self.data[to_scrap] = self.raw_to_num(scraped_data)
+            self.data[to_scrap] = raw_to_num(scraped_data)
         except:
             self.logger.info("[yahooSummaryScrapper] Error scraping %s" % to_scrap)
 
@@ -207,22 +207,22 @@ class Fundamentals(object):
             # Total Debt
             to_scrap = "Total Debt"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Fw(500) Ta(end)').text
-            self.data[to_scrap] = self.raw_to_floats(scraped_data)
+            self.data[to_scrap] = raw_to_floats(scraped_data)
             
             # Enterprise Value
             to_scrap = "Enterprise Value"
             scraped_data = soup.find(text = to_scrap).find_next().find_next().text
-            self.data[to_scrap] = self.raw_to_floats(scraped_data)
+            self.data[to_scrap] = raw_to_floats(scraped_data)
 
             # Shares Outstanding
             to_scrap = "Shares Outstanding"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Fw(500) Ta(end)').text
-            self.data[to_scrap] = self.raw_to_floats(scraped_data)
+            self.data[to_scrap] = raw_to_floats(scraped_data)
             
             # Price/Sales < 1
             to_scrap = "Price/Sales"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Fw(500) Ta(end)').text
-            self.data[to_scrap] = self.raw_to_num(scraped_data)
+            self.data[to_scrap] = raw_to_num(scraped_data)
 
             # Beta
             to_scrap = "Beta"
@@ -249,68 +249,40 @@ class Fundamentals(object):
             # Cash And Cash Equivalents
             to_scrap = "Cash And Cash Equivalents"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Ta(end) Pstart(10px)').text            
-            self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
+            self.data[to_scrap] = raw_to_num(scraped_data, multiplier=1000)
 
             # Net Receivables
             to_scrap = "Net Receivables"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Ta(end) Pstart(10px)').text            
-            self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
+            self.data[to_scrap] = raw_to_num(scraped_data, multiplier=1000)
 
             # Inventory
             to_scrap = "Inventory"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Ta(end) Pstart(10px)').text
-            self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
+            self.data[to_scrap] = raw_to_num(scraped_data, multiplier=1000)
 
             # Intangible Assets
             to_scrap = "Intangible Assets"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Ta(end) Pstart(10px)').text
-            self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
+            self.data[to_scrap] = raw_to_num(scraped_data, multiplier=1000)
 
             # Property Plant and Equipment
             to_scrap = "Property Plant and Equipment"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Ta(end) Pstart(10px)').text
-            self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
+            self.data[to_scrap] = raw_to_num(scraped_data, multiplier=1000)
 
             # Below are values that are bold in the data table
             # Total Liabilities
             to_scrap = "Total Liabilities"                                         
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fw(b) Fz(s) Ta(end) Pb(20px)').text
-            self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
+            self.data[to_scrap] = raw_to_num(scraped_data, multiplier=1000)
 
             # Total Assets
             to_scrap = "Total Assets"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fw(b) Fz(s) Ta(end) Pb(20px)').text
-            self.data[to_scrap] = self.raw_to_num(scraped_data, multiplier=1000)
+            self.data[to_scrap] = raw_to_num(scraped_data, multiplier=1000)
         except:
             self.logger.info("[yahooBalanceSheetScrapper] Error scraping %s" % to_scrap)
-
-    def raw_to_floats(self, num): # convert to floats as numbers on MW are represented with a "M" or "B"            
-        # multiplier = 1/1000000
-        multiplier = 1
-
-        if "M" in num:
-            multiplier = 1000000
-        if "B" in num:
-            multiplier = 1000000000
-        if "T" in num:
-            multiplier = 1000000000000
-
-        processor = re.compile(r'[^\d.]+')
-        try:
-            processed_num = float(processor.sub('', num))
-            n = processed_num * multiplier
-            return n
-        except ValueError:
-            return 0.0
-
-    def raw_to_num(self, num, multiplier=1): # convert to floats as numbers on MW are represented with a "M" or "B"            
-        processor = re.compile(r'[^\d.]+')
-        try:
-            processed_num = float(processor.sub('', num))
-            n = processed_num * multiplier
-            return n
-        except ValueError:
-            return 0.0
         
     def print_data(self):
         # print("The Weighted Average Cost of Capital for {0:s} is {1:.2f}%. Other key stats are listed below (Total Debt and Market Cap in MM's)\n\n".format(self.ticker, (self.wacc* 100)))
@@ -327,16 +299,9 @@ class Fundamentals(object):
         filename = "%s.csv" % action
         self.terminated = True
         self.df.to_csv(filename, encoding='utf-8', index=False)
-        # import pdb; pdb.set_trace()
         self.logger.info("[df_to_csv] Dataframe saved to file %s" % filename)
 
-    def filtered_to_csv(self):
-        # import pdb; pdb.set_trace()
-        self.df_filtered.to_csv(self.filtered_filename, encoding='utf-8', index=False)
-        self.logger.info("[filtered_to_csv] Dataframe saved to file %s" % self.filtered_filename)
-
     def csv_to_df(self, action):
-        # import pdb; pdb.set_trace()
         filename = "%s.csv" % action
         if os.path.isfile(filename):
             self.df = pd.read_csv(filename, names=self.KEYS, header=0)

@@ -4,8 +4,9 @@ class Filter(object):
 
 	filters = []
 
-	def __init__(self, logger):
+	def __init__(self, logger, filter_name):
 		self.logger = logger
+		self.name = filter_name
 
 	def add_filter(self, new_filter):
 		self.filters.append(new_filter)
