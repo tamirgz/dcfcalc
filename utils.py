@@ -1,7 +1,7 @@
 import re
 
 def filtered_to_csv(logger, out_df, out_filename):
-    out_df.to_csv("out/" + out_filename, encoding='utf-8', index=False)
+    out_df.to_csv(out_filename, encoding='utf-8', index=False)
     logger.info("[filtered_to_csv] Dataframe saved to file %s" % out_filename)
 
 def raw_to_floats(num): # convert to floats as numbers on MW are represented with a "M" or "B"            

@@ -243,6 +243,7 @@ if __name__ == "__main__":
     l_filter.add_filter('cond = filtered["EY"] > 12')
     l_filter.add_filter('cond = filtered["Price/Sales"] < 1.0')
     l_filter.add_filter('cond = filtered["EV/FCF"] < 10.0')
+    l_filter.add_filter('cond = filtered["Price/Tangible Book Value"] < 1.0')
     filters.append(l_filter)
 
     fundas = Fundamentals(0.025, 0.09, logger)

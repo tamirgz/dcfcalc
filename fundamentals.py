@@ -49,7 +49,9 @@ class Fundamentals(object):
             "NET-NET", \
             "NET-NET%", \
             "EY", \
-            "EV/FCF"]
+            "EV/FCF", \
+            "Tangible Book Value", \
+            "Price/Tangible Book Value"]
 
     def __init__(self, risk_free_rate, market_return, logger):
         self.name = "Fundamentals"
@@ -97,6 +99,9 @@ class Fundamentals(object):
                                             self.data["Property Plant and Equipment"] - \
                                             self.data["Total Liabilities"]) / self.data["Shares Outstanding"]
         self.data["NET-NET%"] = self.data["NET-NET"] / self.data["Previous Close"] - 1
+
+        self.data["Tangible Book Value"] = self.data["Total Assets"] - self.data["Intangible Assets"] - self.data["Total Liabilities"]
+        self.data["Price/Tangible Book Value"] = self.data["Previous Close"] / self.data["Tangible Book Value"]
         
         # EV > 12
         self.data["EY"] = self.data["EPS (TTM)"] / (self.data["Enterprise Value"] / self.data["Shares Outstanding"])
@@ -296,13 +301,13 @@ class Fundamentals(object):
         print("{} : {}%".format("Price-Diff", self.price_diff))
 
     def df_to_csv(self, action):
-        filename = "out/%s.csv" % action
+        filename = "%s.csv" % action
         self.terminated = True
         self.df.to_csv(filename, encoding='utf-8', index=False)
         self.logger.info("[df_to_csv] Dataframe saved to file %s" % filename)
 
     def csv_to_df(self, action):
-        filename = "out/%s.csv" % action
+        filename = "%s.csv" % action
         if os.path.isfile(filename):
             self.df = pd.read_csv(filename, names=self.KEYS, header=0)
             return 1
