@@ -1,4 +1,5 @@
 Symbol|Security Name|Market Category|Test Issue|Financial Status|Round Lot Size|ETF|NextShares
+AABA|Altaba Inc. - Common Stock|Q|N|N|100|N|N
 AAPL|Apple Inc. - Common Stock|Q|N|N|100|N|N
 MRVL|Marvell Technology Group Ltd. - Common Stock|Q|N|N|100|N|N
 MSFT|Microsoft Corporation - Common Stock|Q|N|N|100|N|N

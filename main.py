@@ -94,12 +94,23 @@ def main():
         if action == "ALL":
             idx = get_start_index(action)
             file1 = open('tickers/nasdaqlisted.txt')
-            file2 = open('tickers/otherlisted.txt')
-            for line in file1.readlines()[1:] + file2.readlines()[1:]:
-                stock = line.strip().split('|')[0]
-                if (re.match(r'^[A-Z]+$',stock)):
+            
+            for line in file1.readlines()[1:]:
+                isETF = False
+                splitted = line.strip().split('|')
+                stock = splitted[0]
+                isETF = splitted[6] == "Y"
+                if (re.match(r'^[A-Z]+$',stock) and not isETF):
                     ticker_list.append(stock)
             file1.close()
+
+            file2 = open('tickers/otherlisted.txt')
+            for line in file2.readlines()[1:]:
+                splitted = line.strip().split('|')
+                stock = splitted[0]
+                isETF = splitted[4] == "Y"
+                if (re.match(r'^[A-Z]+$',stock) and not isETF):
+                    ticker_list.append(stock)
             file2.close()
 
             ticker_list_len = len(ticker_list)
@@ -116,8 +127,11 @@ def main():
             idx = get_start_index(action)
             file1 = open('tickers/nasdaqlisted.txt')
             for line in file1.readlines()[1:]:
-                stock = line.strip().split('|')[0]
-                if (re.match(r'^[A-Z]+$',stock)):
+                isETF = False
+                splitted = line.strip().split('|')
+                stock = splitted[0]
+                isETF = splitted[6] == "Y"
+                if (re.match(r'^[A-Z]+$',stock) and not isETF):
                     ticker_list.append(stock)
             file1.close()
 
@@ -135,8 +149,10 @@ def main():
             idx = get_start_index(action)
             file2 = open('tickers/otherlisted.txt')
             for line in file2.readlines()[1:]:
-                stock = line.strip().split('|')[0]
-                if (re.match(r'^[A-Z]+$',stock)):
+                splitted = line.strip().split('|')
+                stock = splitted[0]
+                isETF = splitted[4] == "Y"
+                if (re.match(r'^[A-Z]+$',stock) and not isETF):
                     ticker_list.append(stock)
             file2.close()
 

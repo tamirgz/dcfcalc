@@ -79,15 +79,16 @@ class Fundamentals(object):
 
     def yahooScrapper(self):
         if self.terminated == False:
-            self.yahooSummaryScrapper()
-            self.yahooKeyStatisticsScrapper()
-            self.yahooBalanceSheetScrapper()
-            self.get_cf()
+            ret = self.yahooSummaryScrapper()
+            if ret: # in case of False, then some issue with the Ticker
+                self.yahooKeyStatisticsScrapper()
+                self.yahooBalanceSheetScrapper()
+                self.get_cf()
 
-            # add scrapped data to the Dataframe
-            self.addToDb()
+                # add scrapped data to the Dataframe
+                self.addToDb()
 
-            self.calcData()
+                self.calcData()
 
     def calcData(self):
         self.data["NAV"] = (self.data["Total Assets"] - self.data["Intangible Assets"] - self.data["Total Liabilities"]) / self.data["Shares Outstanding"]
@@ -169,6 +170,9 @@ class Fundamentals(object):
         return soup
 
     def yahooSummaryScrapper(self):
+        MAX_RETRIES = 5
+        success = False
+
         try:
             ystock_url = self.URLS[6].format(self.ticker, self.ticker)
             soup = self.getDataFromUrl(ystock_url)
@@ -178,9 +182,21 @@ class Fundamentals(object):
         try:
             self.data["Ticker"] = self.ticker
             
-            to_scrap = "Volume"
-            scraped_data = soup.find(text = to_scrap).find_next().text
-            self.data[to_scrap] = raw_to_num(scraped_data)
+            done = False
+            retries = 0
+            while retries < MAX_RETRIES:
+                try:
+                    to_scrap = "Volume"
+                    scraped_data = soup.find(text = to_scrap).find_next().text
+                    self.data[to_scrap] = raw_to_num(scraped_data)
+                    success = True
+                    break
+                except:
+                    self.logger.error("[yahooSummaryScrapper] Retrying scrapping of Volume")
+                    soup = self.getDataFromUrl(ystock_url)
+                    retries = retries + 1
+            if success == False:
+                return False
 
             to_scrap = "Previous Close"
             scraped_data = soup.find(text = to_scrap).find_next().text
@@ -197,6 +213,8 @@ class Fundamentals(object):
             to_scrap = "EPS (TTM)"
             scraped_data = soup.find(text = to_scrap).find_next().text
             self.data[to_scrap] = raw_to_num(scraped_data)
+
+            return True
         except:
             self.logger.info("[yahooSummaryScrapper] Error scraping %s" % to_scrap)
 
