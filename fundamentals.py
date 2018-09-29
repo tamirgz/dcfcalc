@@ -14,11 +14,11 @@ from utils import *
 class Fundamentals(object):
     next_idx = 0
 
-    URLS = ["http://www.marketwatch.com/investing/stock/{}", 
-            "http://www.marketwatch.com/investing/stock/{}/financials", 
-            "http://www.marketwatch.com/investing/stock/{}/financials/cash-flow",
+    URLS = ["https://www.marketwatch.com/investing/stock/{}", 
+            "https://www.marketwatch.com/investing/stock/{}/financials", 
+            "https://www.marketwatch.com/investing/stock/{}/financials/cash-flow",
             "https://finance.yahoo.com/quote/{}/key-statistics",
-            "http://finviz.com/quote.ashx?t={}",
+            "https://finviz.com/quote.ashx?t={}",
             "https://finance.yahoo.com/quote/{}/balance-sheet",
             "https://finance.yahoo.com/quote/{}?p={}"]
 
@@ -131,8 +131,9 @@ class Fundamentals(object):
 
     def statement_scraper(self, url, *line_items): 
         statement_url = url.format(self.ticker)
-        r = requests.get(statement_url)
-        soup = bs(r.text, "lxml")
+        # r = requests.get(statement_url)
+        # soup = bs(r.text, "lxml")
+        soup = self.getDataFromXUrl(statement_url)
 
         for line_item in line_items:
             target_list = []
@@ -160,6 +161,13 @@ class Fundamentals(object):
                                 _list.append(amount)
                             yield _list
 
+    def getDataFromXUrl(self, url):
+        # soup = bs(requests.get(url, verify=True, timeout=None).content, features='html5lib')
+        # soup = bs(self.requests.one(url).content, features='html5lib')
+        soup = bs(self.ses.get(url, timeout=None).text, features='lxml')
+        # soup = bs(requests.get(url, verify=False, timeout=None).content, features='html5lib')
+        # soup = bs(urllib2.urlopen(url).read(), features='html5lib')
+        return soup
 
     def getDataFromUrl(self, url):
         # soup = bs(requests.get(url, verify=True, timeout=None).content, features='html5lib')
