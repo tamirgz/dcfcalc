@@ -2,11 +2,10 @@ import numpy as np
 
 class Filter(object):
 
-	filters = []
-
 	def __init__(self, logger, filter_name):
 		self.logger = logger
 		self.name = filter_name
+		self.filters = []
 
 	def add_filter(self, new_filter):
 		self.filters.append(new_filter)
@@ -15,7 +14,7 @@ class Filter(object):
 	def filter(self, data):
 		filtered = data
 		for condition in self.filters:
-			self.logger.info("[filter] condition --> %s" % condition)
+			self.logger.info("[filter][%s] condition --> %s" % (self.name, condition))
 			exec(condition) # each condition looks like: cond = data["..."] <=> value
 			false_idx = np.where(cond == False)[0]
 			filtered = filtered.drop(false_idx)

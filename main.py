@@ -238,29 +238,29 @@ if __name__ == "__main__":
     logger.setLevel(logging.INFO)
 
     # NET-NET filter
-    l_filter = Filter(logger, "NET_NET.csv")
-    l_filter.add_filter('cond = filtered["Volume"] > 1000000')
-    l_filter.add_filter('cond = filtered["Previous Close"] > 2.0')
-    l_filter.add_filter('cond = filtered["Previous Close"] < 100.0')
-    l_filter.add_filter('cond = filtered["Cash And Cash Equivalents"] > 0.0')
-    l_filter.add_filter('cond = filtered["PE Ratio (TTM)"] > 0')
-    l_filter.add_filter('cond = filtered["PE Ratio (TTM)"] < 15')
-    l_filter.add_filter('cond = filtered["Net Receivables"] > 0')
-    l_filter.add_filter('cond = filtered["Inventory"] > 0')
-    l_filter.add_filter('cond = filtered["Property Plant and Equipment"] > 0')
-    l_filter.add_filter('cond = filtered["Total Liabilities"] > 0')
-    l_filter.add_filter('cond = filtered["Cash And Cash Equivalents"] + 0.75 * filtered["Net Receivables"] + \
+    filter_1 = Filter(logger, "NET_NET.csv")
+    filter_1.add_filter('cond = filtered["Volume"] > 1000000')
+    filter_1.add_filter('cond = filtered["Previous Close"] > 2.0')
+    filter_1.add_filter('cond = filtered["Previous Close"] < 100.0')
+    filter_1.add_filter('cond = filtered["Cash And Cash Equivalents"] > 0.0')
+    filter_1.add_filter('cond = filtered["PE Ratio (TTM)"] > 0')
+    filter_1.add_filter('cond = filtered["PE Ratio (TTM)"] < 15')
+    filter_1.add_filter('cond = filtered["Net Receivables"] > 0')
+    filter_1.add_filter('cond = filtered["Inventory"] > 0')
+    filter_1.add_filter('cond = filtered["Property Plant and Equipment"] > 0')
+    filter_1.add_filter('cond = filtered["Total Liabilities"] > 0')
+    filter_1.add_filter('cond = filtered["Cash And Cash Equivalents"] + 0.75 * filtered["Net Receivables"] + \
         0.5 * filtered["Inventory"] + filtered["Property Plant and Equipment"] - \
         filtered["Total Liabilities"] > 1.5 * filtered["Previous Close"]')
-    filters.append(l_filter)
+    filters.append(filter_1)
 
     # Yinon filter
-    l_filter = Filter(logger, "Yinon.csv")
-    l_filter.add_filter('cond = filtered["EY"] > 12')
-    l_filter.add_filter('cond = filtered["Price/Sales"] < 1.0')
-    l_filter.add_filter('cond = filtered["EV/FCF"] < 10.0')
-    l_filter.add_filter('cond = filtered["Price/Tangible Book Value"] < 1.0')
-    filters.append(l_filter)
+    filter_2 = Filter(logger, "Yinon.csv")
+    filter_2.add_filter('cond = filtered["EY"] > 12')
+    filter_2.add_filter('cond = filtered["Price/Sales"] < 1.0')
+    filter_2.add_filter('cond = filtered["EV/FCF"] < 10.0')
+    filter_2.add_filter('cond = filtered["Price/Tangible Book Value"] < 1.0')
+    filters.append(filter_2)
 
     fundas = Fundamentals(0.025, 0.09, logger)
 
