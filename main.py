@@ -240,7 +240,7 @@ if __name__ == "__main__":
     # NET-NET filter
     filter_1 = Filter(logger, "NET_NET.csv")
     filter_1.add_filter('cond = filtered["Volume"] > 1000000')
-    filter_1.add_filter('cond = filtered["Previous Close"] > 2.0')
+    filter_1.add_filter('cond = filtered["Previous Close"] > 1.0')
     filter_1.add_filter('cond = filtered["Previous Close"] < 100.0')
     filter_1.add_filter('cond = filtered["Cash And Cash Equivalents"] > 0.0')
     filter_1.add_filter('cond = filtered["PE Ratio (TTM)"] > 0')
@@ -256,6 +256,7 @@ if __name__ == "__main__":
 
     # Yinon filter
     filter_2 = Filter(logger, "Yinon.csv")
+    filter_2.add_filter('cond = filtered["Previous Close"] > 1.0')
     filter_2.add_filter('cond = filtered["EY"] > 12')
     filter_2.add_filter('cond = filtered["Price/Sales"] < 1.0')
     filter_2.add_filter('cond = filtered["EV/FCF"] < 10.0')

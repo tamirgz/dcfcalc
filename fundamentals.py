@@ -20,9 +20,12 @@ class Fundamentals(object):
             "https://finance.yahoo.com/quote/{}/key-statistics",
             "https://finviz.com/quote.ashx?t={}",
             "https://finance.yahoo.com/quote/{}/balance-sheet",
-            "https://finance.yahoo.com/quote/{}?p={}"]
+            "https://finance.yahoo.com/quote/{}?p={}",
+            "https://finance.yahoo.com/quote/{}/profile?p={}"]
 
     KEYS = ["Ticker", \
+            "Sector", \
+            "Industry", \
             "Previous Close", \
             "Volume", \
             "Market Cap", \
@@ -83,6 +86,7 @@ class Fundamentals(object):
             if ret: # in case of False, then some issue with the Ticker
                 self.yahooKeyStatisticsScrapper()
                 self.yahooBalanceSheetScrapper()
+                self.yahooProfileScrapper()
                 self.get_cf()
 
                 # add scrapped data to the Dataframe
@@ -102,7 +106,7 @@ class Fundamentals(object):
         self.data["NET-NET%"] = self.data["NET-NET"] / self.data["Previous Close"] - 1
 
         self.data["Tangible Book Value"] = self.data["Total Assets"] - self.data["Intangible Assets"] - self.data["Total Liabilities"]
-        self.data["Price/Tangible Book Value"] = self.data["Previous Close"] / self.data["Tangible Book Value"]
+        self.data["Price/Tangible Book Value"] = self.data["Previous Close"] / (self.data["Tangible Book Value"] / self.data["Shares Outstanding"])
         
         # EV > 12
         self.data["EY"] = self.data["EPS (TTM)"] / (self.data["Enterprise Value"] / self.data["Shares Outstanding"])
@@ -176,6 +180,25 @@ class Fundamentals(object):
         # soup = bs(requests.get(url, verify=False, timeout=None).content, features='html5lib')
         # soup = bs(urllib2.urlopen(url).read(), features='html5lib')
         return soup
+
+    def yahooProfileScrapper(self):
+        try:
+            ystock_url = self.URLS[7].format(self.ticker, self.ticker)
+            import pdb; pdb.set_trace()
+            soup = self.getDataFromUrl(ystock_url)        
+        except:
+            self.logger.info("[yahooProfileScrapper] Error souping %s" % ystock_url)
+
+        try:
+            to_scrap = "Sector"
+            scraped_data = soup.find(text = to_scrap).find_next().text
+            self.data[to_scrap] = scraped_data
+
+            to_scrap = "Industry"
+            scraped_data = soup.find(text = to_scrap).find_next().text
+            self.data[to_scrap] = scraped_data
+        except:
+            self.logger.info("[yahooProfileScrapper] Error scraping %s" % to_scrap)
 
     def yahooSummaryScrapper(self):
         MAX_RETRIES = 5
