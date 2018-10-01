@@ -184,7 +184,6 @@ class Fundamentals(object):
     def yahooProfileScrapper(self):
         try:
             ystock_url = self.URLS[7].format(self.ticker, self.ticker)
-            import pdb; pdb.set_trace()
             soup = self.getDataFromUrl(ystock_url)        
         except:
             self.logger.info("[yahooProfileScrapper] Error souping %s" % ystock_url)
