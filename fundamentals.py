@@ -54,7 +54,8 @@ class Fundamentals(object):
             "EY", \
             "EV/FCF", \
             "Tangible Book Value", \
-            "Price/Tangible Book Value"]
+            "Price/Tangible Book Value", \
+            "WACC%"]
 
     def __init__(self, risk_free_rate, market_return, logger):
         self.name = "Fundamentals"
@@ -87,7 +88,8 @@ class Fundamentals(object):
                 self.yahooKeyStatisticsScrapper()
                 self.yahooBalanceSheetScrapper()
                 self.yahooProfileScrapper()
-                self.get_cf()
+                self.get_fcf()
+                self.calc_wacc()
 
                 # add scrapped data to the Dataframe
                 self.addToDb()
@@ -125,13 +127,13 @@ class Fundamentals(object):
         self.next_idx += 1
         self.df = self.df.append(l_df, sort=False)
 
-    def get_cf(self):
+    def get_fcf(self):
         cf_generator = self.statement_scraper(self.URLS[2], "Free Cash Flow")
         try:
             cash_flow = next(cf_generator)
             self.data["FCF"] = cash_flow[-1]
         except:
-            self.logger.info("[get_cf] Error scrapping %s" % self.URLS[2])
+            self.logger.info("[get_fcf] Error scrapping %s" % self.URLS[2])
 
     def statement_scraper(self, url, *line_items): 
         statement_url = url.format(self.ticker)
@@ -243,6 +245,13 @@ class Fundamentals(object):
             to_scrap = "EPS (TTM)"
             scraped_data = soup.find(text = to_scrap).find_next().text
             self.data[to_scrap] = raw_to_num(scraped_data)
+
+            # Forward Dividend & Yield
+            to_scrap = "Forward Dividend & Yield"
+            scraped_data = soup.find(text = to_scrap).find_next().text
+            scraped_data = scraped_data.split(' ')
+            self.data["Dividend"] = raw_to_num(scraped_data[0])
+            self.data["Dividend %"] = raw_to_num(scraped_data[1].split('(')[1].split(')')[0].split('%')[0])
 
             return True
         except:
@@ -362,3 +371,34 @@ class Fundamentals(object):
         else:
             self.logger.error("[csv_to_df] file %s does not exist!" % filename)
             return None
+
+    def calc_wacc(self):
+        # requires to be executed after self.yahooKeyStatisticsScrapper
+        # requires to be executed after self.yahooSummaryScrapper
+        is_generator = self.statement_scraper(self.URLS[1], "Gross Interest Expense", "Income Tax", "Pretax Income") # income statement generator
+        
+        try:
+            interest_list = next(is_generator)
+            int_expense = interest_list[-1]
+
+            tax_list = next(is_generator)
+            inc_tax = tax_list[-1]
+
+            pretax_inc_list = next(is_generator)
+            pretax_inc = pretax_inc_list[-1]
+
+            if pretax_inc < 1 or inc_tax < 1: # Adjusts for smaller companies who may temporarily have negative income or tax benefits
+                tax_rate = 0.35
+            else:
+                tax_rate = inc_tax/pretax_inc
+
+            self.cost_of_debt = int_expense/self.data["Total Debt"]
+
+            weighted_coe = (float(self.data["Market Cap"])/(float(self.data["Total Debt"]) + float(self.data["Market Cap"]))) * self.cost_of_eq
+            weighted_cod = (float(self.data["Total Debt"])/(float(self.data["Market Cap"]) + float(self.data["Total Debt"]))) * self.cost_of_debt * (1 - tax_rate)
+
+            self.wacc = weighted_coe + weighted_cod 
+            # self.data["WACC"] = "{0:.2f}%".format(self.wacc * 100)
+            self.data["WACC%"] = self.wacc * 100
+        except:
+            self.logger.error("[calc_wacc] error in function")
