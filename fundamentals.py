@@ -38,7 +38,7 @@ class Fundamentals(object):
             "Intangible Assets", \
             "Total Liabilities", \
             "Shares Outstanding", \
-            "Beta", \
+            "Beta (3y)", \
             "PE Ratio (TTM)", \
             "Price/Sales", \
             "EPS (TTM)", \
@@ -55,7 +55,8 @@ class Fundamentals(object):
             "EV/FCF", \
             "Tangible Book Value", \
             "Price/Tangible Book Value", \
-            "WACC%"]
+            "WACC%", \
+            "CFGR%"]
 
     def __init__(self, risk_free_rate, market_return, logger):
         self.name = "Fundamentals"
@@ -63,8 +64,6 @@ class Fundamentals(object):
         self.risk_free_rate = risk_free_rate # Return on 10 year US Treasury Bonds
         self.market_return = market_return # 3yr Return on the SPY (S&P 500 tracker)
         self.mw_url = "" # URL with appended ticker
-        self.wacc = 0
-        self.growth_rate = 0
         self.price_diff = 0
         self.price = 0
         self.df = pd.DataFrame(columns=self.KEYS)
@@ -90,48 +89,67 @@ class Fundamentals(object):
                 self.yahooProfileScrapper()
                 self.get_fcf()
                 self.calc_wacc()
+                self.get_dcf()
+
+                self.calcData()
 
                 # add scrapped data to the Dataframe
                 self.addToDb()
 
-                self.calcData()
-
     def calcData(self):
-        self.data["NAV"] = (self.data["Total Assets"] - self.data["Intangible Assets"] - self.data["Total Liabilities"]) / self.data["Shares Outstanding"]
-        self.data["NAV%"] = self.data["NAV"] / self.data["Previous Close"] - 1
+        try:
+            self.data["NAV"] = (self.data["Total Assets"] - self.data["Intangible Assets"] - self.data["Total Liabilities"]) / self.data["Shares Outstanding"]
+            self.data["NAV%"] = self.data["NAV"] / self.data["Previous Close"] - 1
 
-        self.data["NET-NET"] = (self.data["Cash And Cash Equivalents"] + \
-                                            0.75 * self.data["Net Receivables"] + \
-                                            0.50 * self.data["Inventory"] + \
-                                            self.data["Property Plant and Equipment"] - \
-                                            self.data["Total Liabilities"]) / self.data["Shares Outstanding"]
-        self.data["NET-NET%"] = self.data["NET-NET"] / self.data["Previous Close"] - 1
+            self.data["NET-NET"] = (self.data["Cash And Cash Equivalents"] + \
+                                                0.75 * self.data["Net Receivables"] + \
+                                                0.50 * self.data["Inventory"] + \
+                                                self.data["Property Plant and Equipment"] - \
+                                                self.data["Total Liabilities"]) / self.data["Shares Outstanding"]
+            self.data["NET-NET%"] = self.data["NET-NET"] / self.data["Previous Close"] - 1
 
-        self.data["Tangible Book Value"] = self.data["Total Assets"] - self.data["Intangible Assets"] - self.data["Total Liabilities"]
-        self.data["Price/Tangible Book Value"] = self.data["Previous Close"] / (self.data["Tangible Book Value"] / self.data["Shares Outstanding"])
-        
-        # EV > 12
-        self.data["EY"] = self.data["EPS (TTM)"] / (self.data["Enterprise Value"] / self.data["Shares Outstanding"])
+            self.data["Tangible Book Value"] = self.data["Total Assets"] - self.data["Intangible Assets"] - self.data["Total Liabilities"]
+            self.data["Price/Tangible Book Value"] = self.data["Previous Close"] / (self.data["Tangible Book Value"] / self.data["Shares Outstanding"])
 
-        # EV/FCF < 10
-        self.data["EV/FCF"] = self.data["Enterprise Value"] / self.data["FCF"]
+            self.data["Cash/sh"] = self.data["Cash And Cash Equivalents"] / self.data["Shares Outstanding"]
+            
+            # EV > 12
+            self.data["EY"] = self.data["EPS (TTM)"] / (self.data["Enterprise Value"] / self.data["Shares Outstanding"])
 
-        # self.logger.info("self.data[NAV]: %.2f" % self.data["NAV"])
-        # self.logger.info("self.data[NAV%%]: %.2f%%" % self.data["NAV%"])
-        # self.logger.info("self.data[NET-NET]: %.2f" % self.data["NET-NET"])
-        # self.logger.info("self.data[NET-NET%%]: %.2f%%" % self.data["NET-NET%"])
-        # self.logger.info("self.data[EY%%]: %.2f%%" % self.data["EY"])
+            # EV/FCF < 10
+            self.data["EV/FCF"] = self.data["Enterprise Value"] / self.data["FCF"]
+
+            # self.logger.info("self.data[NAV]: %.2f" % self.data["NAV"])
+            # self.logger.info("self.data[NAV%%]: %.2f%%" % self.data["NAV%"])
+            # self.logger.info("self.data[NET-NET]: %.2f" % self.data["NET-NET"])
+            # self.logger.info("self.data[NET-NET%%]: %.2f%%" % self.data["NET-NET%"])
+            # self.logger.info("self.data[EY%%]: %.2f%%" % self.data["EY"])
+        except:
+            self.logger.error("[calcData] Error calculating data")
 
     def addToDb(self):
         l_df = pd.DataFrame(self.data, index=[self.next_idx], columns=self.KEYS)
         self.next_idx += 1
         self.df = self.df.append(l_df, sort=False)
 
+    def get_growth_rate(self, trend_list):
+        #Calculate the growth rate of a list of line items from 2012 - 2016
+        trend_list = [num for num in trend_list if num != 0]
+        growth_sum = 0
+        for a, b in zip(trend_list[::1], trend_list[1::1]):
+            growth_sum += (b - a) / a
+
+        growth_rate = growth_sum/(len(trend_list)-1)
+        return growth_rate
+
     def get_fcf(self):
         cf_generator = self.statement_scraper(self.URLS[2], "Free Cash Flow")
         try:
             cash_flow = next(cf_generator)
+            cf_growth_rate = self.get_growth_rate(cash_flow)
             self.data["FCF"] = cash_flow[-1]
+            # self.data["CFGR%"] = "{0:.2f}%".format(cf_growth_rate * 100)
+            self.data["CFGR%"] = cf_growth_rate * 100
         except:
             self.logger.info("[get_fcf] Error scrapping %s" % self.URLS[2])
 
@@ -287,7 +305,7 @@ class Fundamentals(object):
             self.data[to_scrap] = raw_to_num(scraped_data)
 
             # Beta
-            to_scrap = "Beta"
+            to_scrap = "Beta (3y)"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Fw(500) Ta(end)').text
             self.beta = float(scraped_data) 
             self.data[to_scrap] = self.beta
@@ -372,11 +390,36 @@ class Fundamentals(object):
             self.logger.error("[csv_to_df] file %s does not exist!" % filename)
             return None
 
+    def get_dcf(self):
+        try:
+            wacc = self.data["WACC%"] / 100 # transform to float
+            growth_rate = self.data["CFGR%"] / 100 # transform to float
+            self.cf_list = []
+            self.discounted_cf_list = []
+            CF0 = self.data["FCF"]
+
+            for i in range(1, 6):
+                cf = CF0 * (1.05 ** i)
+                discounted = cf / ((1 + wacc) ** i)
+                self.cf_list.append(cf)
+                self.discounted_cf_list.append(discounted)
+          
+            # TCF = (cf_list[-1] * wacc^5)/ (wacc - growth_rate)
+            # TCF = (cf_list[-1] * wacc**5)/ (wacc - growth_rate)
+            self.TCF = self.cf_list[-1] / (wacc - growth_rate)
+            self.discounted_cf_list.append(self.TCF / ((1 + wacc) ** i))
+            self.PV = sum(self.discounted_cf_list)
+            self.price_per_share = self.PV / self.data["Shares Outstanding"]
+            rate = self.price_per_share / self.data["Previous Close"]
+            self.price_diff = (rate - 1) * 100
+        except:
+            self.logger.error("[get_dcf] ERROR !")
+
     def calc_wacc(self):
         # requires to be executed after self.yahooKeyStatisticsScrapper
         # requires to be executed after self.yahooSummaryScrapper
         is_generator = self.statement_scraper(self.URLS[1], "Gross Interest Expense", "Income Tax", "Pretax Income") # income statement generator
-        
+        # import pdb; pdb.set_trace()
         try:
             interest_list = next(is_generator)
             int_expense = interest_list[-1]
@@ -397,8 +440,8 @@ class Fundamentals(object):
             weighted_coe = (float(self.data["Market Cap"])/(float(self.data["Total Debt"]) + float(self.data["Market Cap"]))) * self.cost_of_eq
             weighted_cod = (float(self.data["Total Debt"])/(float(self.data["Market Cap"]) + float(self.data["Total Debt"]))) * self.cost_of_debt * (1 - tax_rate)
 
-            self.wacc = weighted_coe + weighted_cod 
-            # self.data["WACC"] = "{0:.2f}%".format(self.wacc * 100)
-            self.data["WACC%"] = self.wacc * 100
+            wacc = weighted_coe + weighted_cod 
+            # self.data["WACC"] = "{0:.2f}%".format(wacc * 100)
+            self.data["WACC%"] = wacc * 100
         except:
             self.logger.error("[calc_wacc] error in function")
