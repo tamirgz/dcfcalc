@@ -444,4 +444,5 @@ class Fundamentals(object):
             # self.data["WACC"] = "{0:.2f}%".format(wacc * 100)
             self.data["WACC%"] = wacc * 100
         except:
-            self.logger.error("[calc_wacc] error in function")
+            self.data["WACC%"] = 9
+            self.logger.error("[calc_wacc] error in function, setting to default of 9%")
