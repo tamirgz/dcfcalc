@@ -305,7 +305,7 @@ class Fundamentals(object):
             self.data[to_scrap] = raw_to_num(scraped_data)
 
             # Beta
-            to_scrap = "Beta (3y)"
+            to_scrap = "Beta (3Y Monthly)"
             scraped_data = soup.find(text = to_scrap).find_next(class_='Fz(s) Fw(500) Ta(end)').text
             self.beta = float(scraped_data) 
             self.data[to_scrap] = self.beta
@@ -354,12 +354,14 @@ class Fundamentals(object):
             # Below are values that are bold in the data table
             # Total Liabilities
             to_scrap = "Total Liabilities"                                         
-            scraped_data = soup.find(text = to_scrap).find_next(class_='Fw(b) Fz(s) Ta(end) Pb(20px)').text
+            scraped_data = soup.find(text=to_scrap).find_next('span').text
+            # scraped_data = soup.find(text = to_scrap).find_next(class_='Fw(b) Fz(s) Ta(end) Pb(20px)').text
             self.data[to_scrap] = raw_to_num(scraped_data, multiplier=1000)
 
             # Total Assets
             to_scrap = "Total Assets"
-            scraped_data = soup.find(text = to_scrap).find_next(class_='Fw(b) Fz(s) Ta(end) Pb(20px)').text
+            scraped_data = soup.find(text=to_scrap).find_next('span').text
+            # scraped_data = soup.find(text = to_scrap).find_next(class_='Fw(b) Fz(s) Ta(end) Pb(20px)').text
             self.data[to_scrap] = raw_to_num(scraped_data, multiplier=1000)
         except:
             self.logger.info("[yahooBalanceSheetScrapper] Error scraping %s" % to_scrap)

@@ -168,12 +168,15 @@ def main():
             save_to_csv = True
         elif action == "TEST":
             idx = get_start_index(action)
-            file2 = open('tickers/test.txt')
-            for line in file2.readlines()[1:]:
-                stock = line.strip().split('|')[0]
-                if (re.match(r'^[A-Z]+$',stock)):
+            file1 = open('tickers/test.txt')
+            for line in file1.readlines()[1:]:
+                isETF = False
+                splitted = line.strip().split('|')
+                stock = splitted[0]
+                isETF = splitted[6] == "Y"
+                if (re.match(r'^[A-Z]+$',stock) and not isETF):
                     ticker_list.append(stock)
-            file2.close()
+            file1.close()
 
             ticker_list_len = len(ticker_list)
 
@@ -185,6 +188,24 @@ def main():
                 end = time.time()
                 print "[%s]========================\t%s\t[%d / %d : %f] ========================" % (action, ticker, idx, len(ticker_list), end-start)
             save_to_csv = True
+            # idx = get_start_index(action)
+            # file2 = open('tickers/test.txt')
+            # for line in file2.readlines()[1:]:
+            #     stock = line.strip().split('|')[0]
+            #     if (re.match(r'^[A-Z]+$',stock)):
+            #         ticker_list.append(stock)
+            # file2.close()
+
+            # ticker_list_len = len(ticker_list)
+
+            # while idx < ticker_list_len and terminated == False:
+            #     start = time.time()
+            #     ticker = ticker_list[idx]
+            #     analyze_ticker(ticker, ongoing_print=False)
+            #     idx = idx + 1
+            #     end = time.time()
+            #     print "[%s]========================\t%s\t[%d / %d : %f] ========================" % (action, ticker, idx, len(ticker_list), end-start)
+            # save_to_csv = True
         else:
             ticker = sys.argv[1]
             # print "======================== %s ========================" % ticker
